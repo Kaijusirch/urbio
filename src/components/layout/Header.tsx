@@ -36,7 +36,7 @@ export function Header() {
           <Menu className="h-5 w-5" />
         </SidebarTrigger>
         <div className="hidden sm:block">
-          <h1 className="font-semibold text-foreground">Queensland Taxi CRM</h1>
+          <h1 className="font-semibold text-foreground">URBIO by Chris Balsom</h1>
         </div>
       </div>
 

@@ -63,6 +63,13 @@ export interface LostProperty {
   claimDeadline: string;
   contactAttempts: number;
   passengerPhone?: string;
+  tripDetails?: {
+    pickup: string;
+    dropoff: string;
+    fare: number;
+    date: string;
+    time: string;
+  };
 }
 
 export interface FareEvasion {
@@ -79,6 +86,10 @@ export interface FareEvasion {
   vehicleRego: string;
   status: 'open' | 'investigating' | 'recovered' | 'written_off';
   policeReport?: string;
+  tripDetails?: {
+    pickup: string;
+    dropoff: string;
+  };
 }
 
 export interface Incident {
@@ -123,9 +134,9 @@ export interface ActivityFeedItem {
 
 // Demo Users
 export const demoUsers: User[] = [
-  { id: '1', name: 'Sarah Mitchell', email: 'dispatch@qldtaxi.com.au', role: 'dispatch' },
-  { id: '2', name: 'Michael Chen', email: 'manager@qldtaxi.com.au', role: 'manager' },
-  { id: '3', name: 'Rebecca Thompson', email: 'compliance@qldtaxi.com.au', role: 'compliance' },
+  { id: '1', name: 'Sarah Mitchell', email: 'dispatch@urbio.com.au', role: 'dispatch' },
+  { id: '2', name: 'Michael Chen', email: 'manager@urbio.com.au', role: 'manager' },
+  { id: '3', name: 'Rebecca Thompson', email: 'compliance@urbio.com.au', role: 'compliance' },
 ];
 
 // Drivers (15+ profiles)
@@ -625,6 +636,13 @@ export const lostProperty: LostProperty[] = [
     claimDeadline: '02/03/2026',
     contactAttempts: 2,
     passengerPhone: '0412 987 654',
+    tripDetails: {
+      pickup: 'Brisbane Airport Domestic',
+      dropoff: 'Queen Street Mall, Brisbane',
+      fare: 52.00,
+      date: '02/02/2026',
+      time: '09:45',
+    },
   },
   {
     id: 'LP002',
@@ -638,6 +656,13 @@ export const lostProperty: LostProperty[] = [
     status: 'unclaimed',
     claimDeadline: '01/03/2026',
     contactAttempts: 0,
+    tripDetails: {
+      pickup: 'Cairns Esplanade',
+      dropoff: 'Palm Cove',
+      fare: 45.00,
+      date: '01/02/2026',
+      time: '14:20',
+    },
   },
   {
     id: 'LP003',
@@ -652,6 +677,13 @@ export const lostProperty: LostProperty[] = [
     claimDeadline: '28/02/2026',
     contactAttempts: 1,
     passengerPhone: '0423 456 123',
+    tripDetails: {
+      pickup: 'Gold Coast Airport',
+      dropoff: 'Surfers Paradise',
+      fare: 38.00,
+      date: '31/01/2026',
+      time: '11:30',
+    },
   },
   {
     id: 'LP004',
@@ -666,6 +698,13 @@ export const lostProperty: LostProperty[] = [
     claimDeadline: '26/02/2026',
     contactAttempts: 3,
     passengerPhone: '0434 567 890',
+    tripDetails: {
+      pickup: 'Brisbane CBD',
+      dropoff: 'Carindale Shopping Centre',
+      fare: 35.00,
+      date: '29/01/2026',
+      time: '16:15',
+    },
   },
   {
     id: 'LP005',
@@ -680,6 +719,13 @@ export const lostProperty: LostProperty[] = [
     claimDeadline: '25/02/2026',
     contactAttempts: 1,
     passengerPhone: '0445 678 901',
+    tripDetails: {
+      pickup: 'Helensvale Station',
+      dropoff: 'Southport CBD',
+      fare: 28.00,
+      date: '28/01/2026',
+      time: '08:45',
+    },
   },
   {
     id: 'LP006',
@@ -693,6 +739,13 @@ export const lostProperty: LostProperty[] = [
     status: 'unclaimed',
     claimDeadline: '24/02/2026',
     contactAttempts: 0,
+    tripDetails: {
+      pickup: 'Burleigh Heads',
+      dropoff: 'Robina Town Centre',
+      fare: 22.00,
+      date: '27/01/2026',
+      time: '15:30',
+    },
   },
 ];
 
@@ -712,6 +765,10 @@ export const fareEvasions: FareEvasion[] = [
     vehicleRego: 'T67-345',
     status: 'investigating',
     policeReport: 'QP2026-0892341',
+    tripDetails: {
+      pickup: 'Brisbane Airport Domestic',
+      dropoff: 'Brunswick Street, Fortitude Valley',
+    },
   },
   {
     id: 'FE002',
@@ -726,6 +783,10 @@ export const fareEvasions: FareEvasion[] = [
     driverName: 'Maria Santos',
     vehicleRego: 'T56-123',
     status: 'open',
+    tripDetails: {
+      pickup: 'Broadbeach Casino',
+      dropoff: 'Cavill Avenue, Surfers Paradise',
+    },
   },
   {
     id: 'FE003',
@@ -740,6 +801,10 @@ export const fareEvasions: FareEvasion[] = [
     driverName: 'Daniel Kim',
     vehicleRego: 'T23-901',
     status: 'written_off',
+    tripDetails: {
+      pickup: 'Cairns Esplanade',
+      dropoff: 'Lake Street, Cairns CBD',
+    },
   },
   {
     id: 'FE004',
@@ -755,6 +820,10 @@ export const fareEvasions: FareEvasion[] = [
     vehicleRego: 'T78-234',
     status: 'investigating',
     policeReport: 'QP2026-0891567',
+    tripDetails: {
+      pickup: 'Townsville CBD',
+      dropoff: 'Cranbrook (false address)',
+    },
   },
 ];
 

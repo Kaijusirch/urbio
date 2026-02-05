@@ -2,6 +2,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import {
   Table,
   TableBody,
@@ -17,9 +28,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { complaints } from '@/data/mockData';
+import { complaints, Complaint, drivers } from '@/data/mockData';
 import { useState } from 'react';
-import { Search, Clock, AlertCircle, CheckCircle2, FileText, MapPin, Car, DollarSign, Calendar } from 'lucide-react';
+import { Search, Clock, AlertCircle, CheckCircle2, FileText, MapPin, Car, DollarSign, Calendar, Plus } from 'lucide-react';
 
 const priorityColors = {
   critical: 'bg-destructive text-destructive-foreground',
@@ -54,8 +65,23 @@ export default function ComplaintsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [localComplaints, setLocalComplaints] = useState<Complaint[]>(complaints);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [newComplaint, setNewComplaint] = useState({
+    title: '',
+    description: '',
+    priority: 'medium' as 'critical' | 'high' | 'medium' | 'low',
+    driverId: '',
+    vehicleRego: '',
+    pickup: '',
+    dropoff: '',
+    fare: '',
+    tripDate: '',
+    tripTime: '',
+    source: 'phone' as 'app' | 'phone' | 'street_hail' | 'autocab',
+  });
 
-  const filteredComplaints = complaints.filter((complaint) => {
+  const filteredComplaints = localComplaints.filter((complaint) => {
     const matchesSearch =
       complaint.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       complaint.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -68,12 +94,193 @@ export default function ComplaintsPage() {
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
+  const handleAddComplaint = () => {
+    const selectedDriver = drivers.find(d => d.id === newComplaint.driverId);
+    const today = new Date();
+    const formattedDate = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+    
+    const complaint: Complaint = {
+      id: `C${String(localComplaints.length + 1).padStart(3, '0')}`,
+      reference: `CMP-2026-${String(143 + localComplaints.length).padStart(4, '0')}`,
+      title: newComplaint.title,
+      description: newComplaint.description,
+      priority: newComplaint.priority,
+      status: 'new',
+      createdAt: `${formattedDate} ${new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}`,
+      deadline: formattedDate, // Would calculate 7 days from now
+      driverId: newComplaint.driverId,
+      driverName: selectedDriver?.name || 'Unknown',
+      vehicleRego: newComplaint.vehicleRego,
+      bookingDetails: {
+        pickup: newComplaint.pickup,
+        dropoff: newComplaint.dropoff,
+        fare: parseFloat(newComplaint.fare) || 0,
+        date: newComplaint.tripDate,
+        time: newComplaint.tripTime,
+        source: newComplaint.source,
+      },
+    };
+    setLocalComplaints([complaint, ...localComplaints]);
+    setDialogOpen(false);
+    setNewComplaint({
+      title: '',
+      description: '',
+      priority: 'medium',
+      driverId: '',
+      vehicleRego: '',
+      pickup: '',
+      dropoff: '',
+      fare: '',
+      tripDate: '',
+      tripTime: '',
+      source: 'phone',
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Complaints Management</h1>
-        <p className="text-muted-foreground">{complaints.filter(c => c.status !== 'closed').length} active complaints</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Complaints Management</h1>
+          <p className="text-muted-foreground">{localComplaints.filter(c => c.status !== 'closed').length} active complaints</p>
+        </div>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              New Complaint
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Log New Complaint</DialogTitle>
+              <DialogDescription>Enter details of the customer complaint.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2 col-span-2">
+                  <Label>Complaint Title</Label>
+                  <Input 
+                    value={newComplaint.title}
+                    onChange={(e) => setNewComplaint({...newComplaint, title: e.target.value})}
+                    placeholder="Brief description of complaint"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea 
+                  value={newComplaint.description}
+                  onChange={(e) => setNewComplaint({...newComplaint, description: e.target.value})}
+                  placeholder="Full details of the complaint..."
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Priority</Label>
+                  <Select value={newComplaint.priority} onValueChange={(v) => setNewComplaint({...newComplaint, priority: v as typeof newComplaint.priority})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="critical">Critical</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Driver</Label>
+                  <Select value={newComplaint.driverId} onValueChange={(v) => setNewComplaint({...newComplaint, driverId: v})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select driver" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {drivers.map(d => (
+                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Vehicle Rego</Label>
+                <Input 
+                  value={newComplaint.vehicleRego}
+                  onChange={(e) => setNewComplaint({...newComplaint, vehicleRego: e.target.value})}
+                  placeholder="T12-345"
+                />
+              </div>
+              
+              {/* Trip Details Section */}
+              <div className="pt-4 border-t">
+                <h4 className="font-medium mb-3">Booking Details</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Pickup Location</Label>
+                    <Input 
+                      value={newComplaint.pickup}
+                      onChange={(e) => setNewComplaint({...newComplaint, pickup: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Dropoff Location</Label>
+                    <Input 
+                      value={newComplaint.dropoff}
+                      onChange={(e) => setNewComplaint({...newComplaint, dropoff: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 gap-4 mt-4">
+                  <div className="space-y-2">
+                    <Label>Fare ($)</Label>
+                    <Input 
+                      value={newComplaint.fare}
+                      onChange={(e) => setNewComplaint({...newComplaint, fare: e.target.value})}
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Trip Date</Label>
+                    <Input 
+                      value={newComplaint.tripDate}
+                      onChange={(e) => setNewComplaint({...newComplaint, tripDate: e.target.value})}
+                      placeholder="DD/MM/YYYY"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Trip Time</Label>
+                    <Input 
+                      value={newComplaint.tripTime}
+                      onChange={(e) => setNewComplaint({...newComplaint, tripTime: e.target.value})}
+                      placeholder="HH:MM"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Source</Label>
+                    <Select value={newComplaint.source} onValueChange={(v) => setNewComplaint({...newComplaint, source: v as typeof newComplaint.source})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="app">App</SelectItem>
+                        <SelectItem value="phone">Phone</SelectItem>
+                        <SelectItem value="street_hail">Street Hail</SelectItem>
+                        <SelectItem value="autocab">Autocab</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleAddComplaint}>Log Complaint</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Summary Cards */}
@@ -83,7 +290,7 @@ export default function ComplaintsPage() {
             <div className="flex items-center gap-3">
               <AlertCircle className="h-8 w-8 text-destructive" />
               <div>
-                <p className="text-2xl font-bold">{complaints.filter(c => c.priority === 'critical' && c.status !== 'closed').length}</p>
+                <p className="text-2xl font-bold">{localComplaints.filter(c => c.priority === 'critical' && c.status !== 'closed').length}</p>
                 <p className="text-sm text-muted-foreground">Critical</p>
               </div>
             </div>
@@ -94,7 +301,7 @@ export default function ComplaintsPage() {
             <div className="flex items-center gap-3">
               <Clock className="h-8 w-8 text-warning" />
               <div>
-                <p className="text-2xl font-bold">{complaints.filter(c => c.status === 'new').length}</p>
+                <p className="text-2xl font-bold">{localComplaints.filter(c => c.status === 'new').length}</p>
                 <p className="text-sm text-muted-foreground">New</p>
               </div>
             </div>
@@ -105,7 +312,7 @@ export default function ComplaintsPage() {
             <div className="flex items-center gap-3">
               <FileText className="h-8 w-8 text-primary" />
               <div>
-                <p className="text-2xl font-bold">{complaints.filter(c => c.status === 'under_review').length}</p>
+                <p className="text-2xl font-bold">{localComplaints.filter(c => c.status === 'under_review').length}</p>
                 <p className="text-sm text-muted-foreground">Under Review</p>
               </div>
             </div>
@@ -116,7 +323,7 @@ export default function ComplaintsPage() {
             <div className="flex items-center gap-3">
               <CheckCircle2 className="h-8 w-8 text-success" />
               <div>
-                <p className="text-2xl font-bold">{complaints.filter(c => c.status === 'resolved' || c.status === 'closed').length}</p>
+                <p className="text-2xl font-bold">{localComplaints.filter(c => c.status === 'resolved' || c.status === 'closed').length}</p>
                 <p className="text-sm text-muted-foreground">Resolved</p>
               </div>
             </div>

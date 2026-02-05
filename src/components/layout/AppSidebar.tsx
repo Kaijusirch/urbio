@@ -14,7 +14,6 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
-  Car,
   LayoutDashboard,
   Users,
   MessageSquareWarning,
@@ -22,8 +21,8 @@ import {
   DollarSign,
   AlertTriangle,
   Gavel,
-  Activity,
 } from 'lucide-react';
+import urbioLogo from '@/assets/urbio-logo.png';
 
 const mainNavItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, roles: ['dispatch', 'manager', 'compliance'] },
@@ -63,13 +62,15 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-            <Car className="w-5 h-5" />
-          </div>
+          <img 
+            src={urbioLogo} 
+            alt="Urbio" 
+            className="w-9 h-9 object-contain"
+          />
           {!collapsed && (
             <div>
-              <h2 className="font-semibold text-sidebar-foreground text-sm">QLD Taxi</h2>
-              <p className="text-xs text-sidebar-muted">CRM System</p>
+              <h2 className="font-semibold text-sidebar-foreground text-sm">Urbio</h2>
+              <p className="text-xs text-sidebar-foreground/60 capitalize">{user?.role} Portal</p>
             </div>
           )}
         </div>
@@ -77,7 +78,7 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-muted">Main</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground font-medium">Main</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {filterByRole(mainNavItems).map((item) => (
@@ -99,7 +100,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-muted">Operations</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground font-medium">Operations</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {filterByRole(operationsItems).map((item) => (
@@ -122,7 +123,7 @@ export function AppSidebar() {
 
         {filterByRole(complianceItems).length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-muted">Compliance</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-sidebar-foreground font-medium">Compliance</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {filterByRole(complianceItems).map((item) => (
@@ -145,14 +146,6 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
-        {!collapsed && (
-          <div className="flex items-center gap-2 text-xs text-sidebar-muted">
-          <Activity className="w-3 h-3 animate-pulse-dot text-success" />
-          <span>Autocab Connected</span>
-        </div>
-        )}
-      </SidebarFooter>
     </Sidebar>
   );
 }

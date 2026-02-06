@@ -92,7 +92,7 @@ export default function Login() {
           <img 
             src={urbioLogo} 
             alt="Urbio Logo" 
-            className="w-80 h-80 mx-auto lg:mx-0 object-contain mb-4"
+            className="w-80 h-80 mx-auto lg:mx-0 object-contain mb-8"
           />
           <h1 className="text-3xl font-bold text-foreground">Urbio</h1>
           <p className="text-muted-foreground mt-2 mb-8">Customer Management System</p>

@@ -92,11 +92,8 @@ export default function Login() {
           <img 
             src={urbioLogo} 
             alt="Urbio Logo" 
-            className="w-80 h-80 mx-auto lg:mx-0 object-contain mb-8"
+            className="w-82 h-82 mx-auto lg:mx-0 object-contain mb-4"
           />
-          <h1 className="text-3xl font-bold text-foreground">Urbio</h1>
-          <p className="text-muted-foreground mt-2 mb-8">Customer Management System</p>
-          
           {/* Demo Credentials */}
           <div className="p-4 rounded-lg bg-accent/10 border border-accent/30 text-left">
             <p className="text-sm font-medium text-accent-foreground mb-3">Demo Credentials</p>

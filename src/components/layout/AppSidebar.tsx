@@ -70,7 +70,7 @@ export function AppSidebar() {
           {!collapsed && (
             <div>
               <h2 className="font-semibold text-sidebar-foreground text-sm">Urbio</h2>
-              <p className="text-xs text-sidebar-foreground/60 capitalize">{user?.role} Portal</p>
+              <p className="text-xs text-sidebar-foreground/60">FLEET OPERATIONS</p>
             </div>
           )}
         </div>

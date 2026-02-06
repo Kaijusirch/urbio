@@ -95,7 +95,7 @@ export default function Login() {
             className="w-48 h-48 mx-auto lg:mx-0 object-contain mb-4"
           />
           <h1 className="text-3xl font-bold text-foreground">Urbio</h1>
-          <p className="text-muted-foreground mt-2 mb-8">Dispatch Management System</p>
+          <p className="text-muted-foreground mt-2 mb-8">Customer Management System</p>
           
           {/* Demo Credentials */}
           <div className="p-4 rounded-lg bg-accent/10 border border-accent/30 text-left">

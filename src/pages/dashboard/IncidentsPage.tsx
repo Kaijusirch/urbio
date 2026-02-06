@@ -14,6 +14,16 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -22,7 +32,7 @@ import {
 } from '@/components/ui/select';
 import { incidents, Incident, drivers } from '@/data/mockData';
 import { useState } from 'react';
-import { Search, AlertTriangle, MapPin, Calendar, Clock, Car, User, CheckCircle2, AlertCircle, Plus } from 'lucide-react';
+import { Search, AlertTriangle, MapPin, Calendar, Clock, Car, User, CheckCircle2, AlertCircle, Plus, Pencil, Trash2 } from 'lucide-react';
 
 const severityColors = {
   critical: 'bg-destructive text-destructive-foreground',
@@ -61,24 +71,44 @@ const typeIcons = {
   dispute: AlertTriangle,
 };
 
+type IncidentForm = {
+  type: 'safety' | 'vehicle' | 'passenger' | 'environmental' | 'dispute';
+  title: string;
+  description: string;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  status: 'reported' | 'investigating' | 'resolved' | 'closed';
+  location: string;
+  date: string;
+  time: string;
+  driverId: string;
+  vehicleRego: string;
+  followUpRequired: boolean;
+};
+
+const emptyForm: IncidentForm = {
+  type: 'safety',
+  title: '',
+  description: '',
+  severity: 'medium',
+  status: 'reported',
+  location: '',
+  date: '',
+  time: '',
+  driverId: '',
+  vehicleRego: '',
+  followUpRequired: false,
+};
+
 export default function IncidentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [localIncidents, setLocalIncidents] = useState<Incident[]>(incidents);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [newIncident, setNewIncident] = useState({
-    type: 'safety' as 'safety' | 'vehicle' | 'passenger' | 'environmental' | 'dispute',
-    title: '',
-    description: '',
-    severity: 'medium' as 'critical' | 'high' | 'medium' | 'low',
-    location: '',
-    date: '',
-    time: '',
-    driverId: '',
-    vehicleRego: '',
-    followUpRequired: false,
-  });
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
+  const [formData, setFormData] = useState<IncidentForm>(emptyForm);
 
   const filteredIncidents = localIncidents.filter((incident) => {
     const matchesSearch =
@@ -93,38 +123,210 @@ export default function IncidentsPage() {
   });
 
   const handleAddIncident = () => {
-    const selectedDriver = drivers.find(d => d.id === newIncident.driverId);
+    const selectedDriver = drivers.find(d => d.id === formData.driverId);
     const incident: Incident = {
       id: `INC${String(localIncidents.length + 1).padStart(3, '0')}`,
       reference: `INC-2026-${String(157 + localIncidents.length).padStart(4, '0')}`,
-      type: newIncident.type,
-      title: newIncident.title,
-      description: newIncident.description,
-      severity: newIncident.severity,
-      location: newIncident.location,
-      date: newIncident.date,
-      time: newIncident.time,
-      driverId: newIncident.driverId || undefined,
+      type: formData.type,
+      title: formData.title,
+      description: formData.description,
+      severity: formData.severity,
+      location: formData.location,
+      date: formData.date,
+      time: formData.time,
+      driverId: formData.driverId || undefined,
       driverName: selectedDriver?.name,
-      vehicleRego: newIncident.vehicleRego || undefined,
+      vehicleRego: formData.vehicleRego || undefined,
       status: 'reported',
-      followUpRequired: newIncident.followUpRequired,
+      followUpRequired: formData.followUpRequired,
     };
     setLocalIncidents([incident, ...localIncidents]);
     setDialogOpen(false);
-    setNewIncident({
-      type: 'safety',
-      title: '',
-      description: '',
-      severity: 'medium',
-      location: '',
-      date: '',
-      time: '',
-      driverId: '',
-      vehicleRego: '',
-      followUpRequired: false,
-    });
+    setFormData(emptyForm);
   };
+
+  const handleEditClick = (incident: Incident) => {
+    setSelectedIncident(incident);
+    setFormData({
+      type: incident.type,
+      title: incident.title,
+      description: incident.description,
+      severity: incident.severity,
+      status: incident.status,
+      location: incident.location,
+      date: incident.date,
+      time: incident.time,
+      driverId: incident.driverId || '',
+      vehicleRego: incident.vehicleRego || '',
+      followUpRequired: incident.followUpRequired,
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateIncident = () => {
+    if (!selectedIncident) return;
+    const selectedDriver = drivers.find(d => d.id === formData.driverId);
+    setLocalIncidents(localIncidents.map(i => 
+      i.id === selectedIncident.id 
+        ? {
+            ...i,
+            type: formData.type,
+            title: formData.title,
+            description: formData.description,
+            severity: formData.severity,
+            status: formData.status,
+            location: formData.location,
+            date: formData.date,
+            time: formData.time,
+            driverId: formData.driverId || undefined,
+            driverName: selectedDriver?.name,
+            vehicleRego: formData.vehicleRego || undefined,
+            followUpRequired: formData.followUpRequired,
+          }
+        : i
+    ));
+    setEditDialogOpen(false);
+    setSelectedIncident(null);
+    setFormData(emptyForm);
+  };
+
+  const handleDeleteClick = (incident: Incident) => {
+    setSelectedIncident(incident);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!selectedIncident) return;
+    setLocalIncidents(localIncidents.filter(i => i.id !== selectedIncident.id));
+    setDeleteDialogOpen(false);
+    setSelectedIncident(null);
+  };
+
+  const IncidentFormFields = ({ showStatus = false }: { showStatus?: boolean }) => (
+    <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Incident Type</Label>
+          <Select value={formData.type} onValueChange={(v) => setFormData({...formData, type: v as typeof formData.type})}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="safety">Safety</SelectItem>
+              <SelectItem value="vehicle">Vehicle</SelectItem>
+              <SelectItem value="passenger">Passenger</SelectItem>
+              <SelectItem value="environmental">Environmental</SelectItem>
+              <SelectItem value="dispute">Dispute</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Severity</Label>
+          <Select value={formData.severity} onValueChange={(v) => setFormData({...formData, severity: v as typeof formData.severity})}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="critical">Critical</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="low">Low</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      {showStatus && (
+        <div className="space-y-2">
+          <Label>Status</Label>
+          <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v as typeof formData.status})}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="reported">Reported</SelectItem>
+              <SelectItem value="investigating">Investigating</SelectItem>
+              <SelectItem value="resolved">Resolved</SelectItem>
+              <SelectItem value="closed">Closed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      <div className="space-y-2">
+        <Label>Title</Label>
+        <Input 
+          value={formData.title}
+          onChange={(e) => setFormData({...formData, title: e.target.value})}
+          placeholder="Brief incident title"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Description</Label>
+        <Textarea 
+          value={formData.description}
+          onChange={(e) => setFormData({...formData, description: e.target.value})}
+          placeholder="Detailed description of incident..."
+        />
+      </div>
+      <div className="grid grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label>Location</Label>
+          <Input 
+            value={formData.location}
+            onChange={(e) => setFormData({...formData, location: e.target.value})}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Date</Label>
+          <Input 
+            value={formData.date}
+            onChange={(e) => setFormData({...formData, date: e.target.value})}
+            placeholder="DD/MM/YYYY"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Time</Label>
+          <Input 
+            value={formData.time}
+            onChange={(e) => setFormData({...formData, time: e.target.value})}
+            placeholder="HH:MM"
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Driver (optional)</Label>
+          <Select value={formData.driverId} onValueChange={(v) => setFormData({...formData, driverId: v})}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select driver" />
+            </SelectTrigger>
+            <SelectContent>
+              {drivers.map(d => (
+                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Vehicle Rego (optional)</Label>
+          <Input 
+            value={formData.vehicleRego}
+            onChange={(e) => setFormData({...formData, vehicleRego: e.target.value})}
+            placeholder="T12-345"
+          />
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <input 
+          type="checkbox" 
+          id="followUp"
+          checked={formData.followUpRequired}
+          onChange={(e) => setFormData({...formData, followUpRequired: e.target.checked})}
+          className="rounded"
+        />
+        <Label htmlFor="followUp">Follow-up Required</Label>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -134,7 +336,10 @@ export default function IncidentsPage() {
           <h1 className="text-2xl font-bold text-foreground">Incidents & Safety Reports</h1>
           <p className="text-muted-foreground">{localIncidents.filter(i => i.status !== 'closed').length} active incidents</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) setFormData(emptyForm);
+        }}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
@@ -146,113 +351,7 @@ export default function IncidentsPage() {
               <DialogTitle>Report New Incident</DialogTitle>
               <DialogDescription>Enter details of the safety incident.</DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Incident Type</Label>
-                  <Select value={newIncident.type} onValueChange={(v) => setNewIncident({...newIncident, type: v as typeof newIncident.type})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="safety">Safety</SelectItem>
-                      <SelectItem value="vehicle">Vehicle</SelectItem>
-                      <SelectItem value="passenger">Passenger</SelectItem>
-                      <SelectItem value="environmental">Environmental</SelectItem>
-                      <SelectItem value="dispute">Dispute</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Severity</Label>
-                  <Select value={newIncident.severity} onValueChange={(v) => setNewIncident({...newIncident, severity: v as typeof newIncident.severity})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="critical">Critical</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="low">Low</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Title</Label>
-                <Input 
-                  value={newIncident.title}
-                  onChange={(e) => setNewIncident({...newIncident, title: e.target.value})}
-                  placeholder="Brief incident title"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea 
-                  value={newIncident.description}
-                  onChange={(e) => setNewIncident({...newIncident, description: e.target.value})}
-                  placeholder="Detailed description of incident..."
-                />
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Location</Label>
-                  <Input 
-                    value={newIncident.location}
-                    onChange={(e) => setNewIncident({...newIncident, location: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Date</Label>
-                  <Input 
-                    value={newIncident.date}
-                    onChange={(e) => setNewIncident({...newIncident, date: e.target.value})}
-                    placeholder="DD/MM/YYYY"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Time</Label>
-                  <Input 
-                    value={newIncident.time}
-                    onChange={(e) => setNewIncident({...newIncident, time: e.target.value})}
-                    placeholder="HH:MM"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Driver (optional)</Label>
-                  <Select value={newIncident.driverId} onValueChange={(v) => setNewIncident({...newIncident, driverId: v})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select driver" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {drivers.map(d => (
-                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Vehicle Rego (optional)</Label>
-                  <Input 
-                    value={newIncident.vehicleRego}
-                    onChange={(e) => setNewIncident({...newIncident, vehicleRego: e.target.value})}
-                    placeholder="T12-345"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <input 
-                  type="checkbox" 
-                  id="followUp"
-                  checked={newIncident.followUpRequired}
-                  onChange={(e) => setNewIncident({...newIncident, followUpRequired: e.target.checked})}
-                  className="rounded"
-                />
-                <Label htmlFor="followUp">Follow-up Required</Label>
-              </div>
-            </div>
+            <IncidentFormFields />
             <DialogFooter>
               <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
               <Button onClick={handleAddIncident}>Report Incident</Button>
@@ -398,22 +497,28 @@ export default function IncidentsPage() {
                     </div>
                   </div>
 
-                  {(incident.driverName || incident.vehicleRego) && (
-                    <div className="lg:text-right space-y-2 min-w-[160px]">
-                      {incident.driverName && (
-                        <div>
-                          <p className="text-sm text-muted-foreground">Driver</p>
-                          <p className="font-medium">{incident.driverName}</p>
-                        </div>
-                      )}
-                      {incident.vehicleRego && (
-                        <div>
-                          <p className="text-sm text-muted-foreground">Vehicle</p>
-                          <p className="font-mono font-medium">{incident.vehicleRego}</p>
-                        </div>
-                      )}
+                  <div className="lg:text-right space-y-2 min-w-[160px]">
+                    <div className="flex lg:justify-end gap-1 mb-2">
+                      <Button variant="ghost" size="icon" onClick={() => handleEditClick(incident)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(incident)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
                     </div>
-                  )}
+                    {incident.driverName && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Driver</p>
+                        <p className="font-medium">{incident.driverName}</p>
+                      </div>
+                    )}
+                    {incident.vehicleRego && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Vehicle</p>
+                        <p className="font-mono font-medium">{incident.vehicleRego}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -428,6 +533,45 @@ export default function IncidentsPage() {
           </Card>
         )}
       </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={(open) => {
+        setEditDialogOpen(open);
+        if (!open) {
+          setSelectedIncident(null);
+          setFormData(emptyForm);
+        }
+      }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Incident</DialogTitle>
+            <DialogDescription>Update the incident details below.</DialogDescription>
+          </DialogHeader>
+          <IncidentFormFields showStatus />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleUpdateIncident}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Incident</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete incident {selectedIncident?.reference}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

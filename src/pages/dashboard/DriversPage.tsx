@@ -13,6 +13,16 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -29,7 +39,7 @@ import {
 } from '@/components/ui/table';
 import { drivers, Driver } from '@/data/mockData';
 import { useState } from 'react';
-import { Search, Phone, AlertCircle, CheckCircle2, Clock, Plus } from 'lucide-react';
+import { Search, Phone, AlertCircle, CheckCircle2, Clock, Plus, Pencil, Trash2 } from 'lucide-react';
 
 const accreditationColors = {
   current: 'bg-success/10 text-success border-success/30',
@@ -43,20 +53,36 @@ const accreditationLabels = {
   expired: 'Expired',
 };
 
+type DriverForm = {
+  name: string;
+  licenseNumber: string;
+  authNumber: string;
+  phone: string;
+  suburb: string;
+  licenseExpiry: string;
+  accreditationStatus: 'current' | 'expiring' | 'expired';
+  accreditationExpiry: string;
+};
+
+const emptyDriverForm: DriverForm = {
+  name: '',
+  licenseNumber: '',
+  authNumber: '',
+  phone: '',
+  suburb: '',
+  licenseExpiry: '',
+  accreditationStatus: 'current',
+  accreditationExpiry: '',
+};
+
 export default function DriversPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [localDrivers, setLocalDrivers] = useState<Driver[]>(drivers);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [newDriver, setNewDriver] = useState({
-    name: '',
-    licenseNumber: '',
-    authNumber: '',
-    phone: '',
-    suburb: '',
-    licenseExpiry: '',
-    accreditationStatus: 'current' as 'current' | 'expiring' | 'expired',
-    accreditationExpiry: '',
-  });
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+  const [formData, setFormData] = useState<DriverForm>(emptyDriverForm);
 
   const filteredDrivers = localDrivers.filter(
     (driver) =>
@@ -69,29 +95,151 @@ export default function DriversPage() {
   const handleAddDriver = () => {
     const driver: Driver = {
       id: `D${String(localDrivers.length + 1).padStart(3, '0')}`,
-      name: newDriver.name,
-      licenseNumber: newDriver.licenseNumber,
-      authNumber: newDriver.authNumber,
-      phone: newDriver.phone,
-      suburb: newDriver.suburb,
-      medicalExpiry: newDriver.licenseExpiry,
-      accreditationStatus: newDriver.accreditationStatus,
-      accreditationExpiry: newDriver.accreditationExpiry,
+      name: formData.name,
+      licenseNumber: formData.licenseNumber,
+      authNumber: formData.authNumber,
+      phone: formData.phone,
+      suburb: formData.suburb,
+      medicalExpiry: formData.licenseExpiry,
+      accreditationStatus: formData.accreditationStatus,
+      accreditationExpiry: formData.accreditationExpiry,
       status: 'available',
     };
     setLocalDrivers([driver, ...localDrivers]);
     setDialogOpen(false);
-    setNewDriver({
-      name: '',
-      licenseNumber: '',
-      authNumber: '',
-      phone: '',
-      suburb: '',
-      licenseExpiry: '',
-      accreditationStatus: 'current',
-      accreditationExpiry: '',
-    });
+    setFormData(emptyDriverForm);
   };
+
+  const handleEditClick = (driver: Driver) => {
+    setSelectedDriver(driver);
+    setFormData({
+      name: driver.name,
+      licenseNumber: driver.licenseNumber,
+      authNumber: driver.authNumber,
+      phone: driver.phone,
+      suburb: driver.suburb,
+      licenseExpiry: driver.medicalExpiry,
+      accreditationStatus: driver.accreditationStatus,
+      accreditationExpiry: driver.accreditationExpiry,
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateDriver = () => {
+    if (!selectedDriver) return;
+    setLocalDrivers(localDrivers.map(d => 
+      d.id === selectedDriver.id 
+        ? {
+            ...d,
+            name: formData.name,
+            licenseNumber: formData.licenseNumber,
+            authNumber: formData.authNumber,
+            phone: formData.phone,
+            suburb: formData.suburb,
+            medicalExpiry: formData.licenseExpiry,
+            accreditationStatus: formData.accreditationStatus,
+            accreditationExpiry: formData.accreditationExpiry,
+          }
+        : d
+    ));
+    setEditDialogOpen(false);
+    setSelectedDriver(null);
+    setFormData(emptyDriverForm);
+  };
+
+  const handleDeleteClick = (driver: Driver) => {
+    setSelectedDriver(driver);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!selectedDriver) return;
+    setLocalDrivers(localDrivers.filter(d => d.id !== selectedDriver.id));
+    setDeleteDialogOpen(false);
+    setSelectedDriver(null);
+  };
+
+  const DriverFormFields = () => (
+    <div className="grid gap-4 py-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Full Name</Label>
+          <Input 
+            value={formData.name}
+            onChange={(e) => setFormData({...formData, name: e.target.value})}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Phone</Label>
+          <Input 
+            value={formData.phone}
+            onChange={(e) => setFormData({...formData, phone: e.target.value})}
+            placeholder="04XX XXX XXX"
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Driver License Number</Label>
+          <Input 
+            value={formData.licenseNumber}
+            onChange={(e) => setFormData({...formData, licenseNumber: e.target.value})}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Licence Expiry</Label>
+          <Input 
+            value={formData.licenseExpiry}
+            onChange={(e) => setFormData({...formData, licenseExpiry: e.target.value})}
+            placeholder="DD/MM/YYYY"
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Authorisation Number</Label>
+          <Input 
+            value={formData.authNumber}
+            onChange={(e) => setFormData({...formData, authNumber: e.target.value})}
+            placeholder="TDA-QLD-YYYY-XXXX"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Suburb</Label>
+          <Input 
+            value={formData.suburb}
+            onChange={(e) => setFormData({...formData, suburb: e.target.value})}
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Accreditation Status</Label>
+          <Select 
+            value={formData.accreditationStatus}
+            onValueChange={(v) => setFormData({...formData, accreditationStatus: v as 'current' | 'expiring' | 'expired'})}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="current">Current</SelectItem>
+              <SelectItem value="expiring">Expiring Soon</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Accreditation Expiry</Label>
+          <Input 
+            value={formData.accreditationExpiry}
+            onChange={(e) => setFormData({...formData, accreditationExpiry: e.target.value})}
+            placeholder="DD/MM/YYYY"
+          />
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -111,7 +259,10 @@ export default function DriversPage() {
               className="pl-9"
             />
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog open={dialogOpen} onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) setFormData(emptyDriverForm);
+          }}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
@@ -123,85 +274,7 @@ export default function DriversPage() {
                 <DialogTitle>Add New Driver</DialogTitle>
                 <DialogDescription>Enter the driver's details below.</DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Full Name</Label>
-                    <Input 
-                      value={newDriver.name}
-                      onChange={(e) => setNewDriver({...newDriver, name: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Phone</Label>
-                    <Input 
-                      value={newDriver.phone}
-                      onChange={(e) => setNewDriver({...newDriver, phone: e.target.value})}
-                      placeholder="04XX XXX XXX"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Driver License Number</Label>
-                    <Input 
-                      value={newDriver.licenseNumber}
-                      onChange={(e) => setNewDriver({...newDriver, licenseNumber: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Licence Expiry</Label>
-                    <Input 
-                      value={newDriver.licenseExpiry}
-                      onChange={(e) => setNewDriver({...newDriver, licenseExpiry: e.target.value})}
-                      placeholder="DD/MM/YYYY"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Authorisation Number</Label>
-                    <Input 
-                      value={newDriver.authNumber}
-                      onChange={(e) => setNewDriver({...newDriver, authNumber: e.target.value})}
-                      placeholder="TDA-QLD-YYYY-XXXX"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Suburb</Label>
-                    <Input 
-                      value={newDriver.suburb}
-                      onChange={(e) => setNewDriver({...newDriver, suburb: e.target.value})}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Accreditation Status</Label>
-                    <Select 
-                      value={newDriver.accreditationStatus}
-                      onValueChange={(v) => setNewDriver({...newDriver, accreditationStatus: v as 'current' | 'expiring' | 'expired'})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="current">Current</SelectItem>
-                        <SelectItem value="expiring">Expiring Soon</SelectItem>
-                        <SelectItem value="expired">Expired</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Accreditation Expiry</Label>
-                    <Input 
-                      value={newDriver.accreditationExpiry}
-                      onChange={(e) => setNewDriver({...newDriver, accreditationExpiry: e.target.value})}
-                      placeholder="DD/MM/YYYY"
-                    />
-                  </div>
-                </div>
-              </div>
+              <DriverFormFields />
               <DialogFooter>
                 <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
                 <Button onClick={handleAddDriver}>Add Driver</Button>
@@ -263,6 +336,7 @@ export default function DriversPage() {
                   <TableHead>Contact</TableHead>
                   <TableHead>Accreditation</TableHead>
                   <TableHead>Licence Expiry</TableHead>
+                  <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -297,6 +371,16 @@ export default function DriversPage() {
                     <TableCell>
                       <span className="text-sm">{driver.medicalExpiry}</span>
                     </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => handleEditClick(driver)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(driver)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -309,6 +393,45 @@ export default function DriversPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={(open) => {
+        setEditDialogOpen(open);
+        if (!open) {
+          setSelectedDriver(null);
+          setFormData(emptyDriverForm);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Driver</DialogTitle>
+            <DialogDescription>Update the driver's details below.</DialogDescription>
+          </DialogHeader>
+          <DriverFormFields />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleUpdateDriver}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Driver</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedDriver?.name}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

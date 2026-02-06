@@ -14,23 +14,25 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { lostProperty, LostProperty } from '@/data/mockData';
 import { useState } from 'react';
-import { Search, Package, Phone, MapPin, Calendar, Clock, Plus, DollarSign, Navigation } from 'lucide-react';
+import { Search, Package, Phone, MapPin, Calendar, Clock, Plus, DollarSign, Navigation, Pencil, Trash2 } from 'lucide-react';
 
 const statusColors = {
   unclaimed: 'bg-warning/10 text-warning border-warning/30',
@@ -46,25 +48,46 @@ const statusLabels = {
   disposed: 'Disposed',
 };
 
+type LostPropertyForm = {
+  item: string;
+  description: string;
+  vehicleRego: string;
+  driverName: string;
+  foundLocation: string;
+  foundDate: string;
+  status: 'unclaimed' | 'contacted' | 'claimed' | 'disposed';
+  passengerPhone: string;
+  tripPickup: string;
+  tripDropoff: string;
+  tripFare: string;
+  tripDate: string;
+  tripTime: string;
+};
+
+const emptyForm: LostPropertyForm = {
+  item: '',
+  description: '',
+  vehicleRego: '',
+  driverName: '',
+  foundLocation: '',
+  foundDate: '',
+  status: 'unclaimed',
+  passengerPhone: '',
+  tripPickup: '',
+  tripDropoff: '',
+  tripFare: '',
+  tripDate: '',
+  tripTime: '',
+};
+
 export default function LostPropertyPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [localItems, setLocalItems] = useState<LostProperty[]>(lostProperty);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [newItem, setNewItem] = useState({
-    item: '',
-    description: '',
-    vehicleRego: '',
-    driverName: '',
-    foundLocation: '',
-    foundDate: '',
-    status: 'unclaimed' as 'unclaimed' | 'contacted' | 'claimed' | 'disposed',
-    passengerPhone: '',
-    tripPickup: '',
-    tripDropoff: '',
-    tripFare: '',
-    tripDate: '',
-    tripTime: '',
-  });
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<LostProperty | null>(null);
+  const [formData, setFormData] = useState<LostPropertyForm>(emptyForm);
 
   const filteredItems = localItems.filter(
     (item) =>
@@ -78,42 +101,217 @@ export default function LostPropertyPage() {
     const item: LostProperty = {
       id: `LP${String(localItems.length + 1).padStart(3, '0')}`,
       reference: `LST-2026-${String(90 + localItems.length).padStart(4, '0')}`,
-      item: newItem.item,
-      description: newItem.description,
-      vehicleRego: newItem.vehicleRego,
-      driverName: newItem.driverName,
-      foundLocation: newItem.foundLocation,
-      foundDate: newItem.foundDate,
-      status: newItem.status,
-      claimDeadline: newItem.foundDate, // Would calculate 30 days from found date
+      item: formData.item,
+      description: formData.description,
+      vehicleRego: formData.vehicleRego,
+      driverName: formData.driverName,
+      foundLocation: formData.foundLocation,
+      foundDate: formData.foundDate,
+      status: formData.status,
+      claimDeadline: formData.foundDate,
       contactAttempts: 0,
-      passengerPhone: newItem.passengerPhone || undefined,
-      tripDetails: newItem.tripPickup ? {
-        pickup: newItem.tripPickup,
-        dropoff: newItem.tripDropoff,
-        fare: parseFloat(newItem.tripFare) || 0,
-        date: newItem.tripDate,
-        time: newItem.tripTime,
+      passengerPhone: formData.passengerPhone || undefined,
+      tripDetails: formData.tripPickup ? {
+        pickup: formData.tripPickup,
+        dropoff: formData.tripDropoff,
+        fare: parseFloat(formData.tripFare) || 0,
+        date: formData.tripDate,
+        time: formData.tripTime,
       } : undefined,
     };
     setLocalItems([item, ...localItems]);
     setDialogOpen(false);
-    setNewItem({
-      item: '',
-      description: '',
-      vehicleRego: '',
-      driverName: '',
-      foundLocation: '',
-      foundDate: '',
-      status: 'unclaimed',
-      passengerPhone: '',
-      tripPickup: '',
-      tripDropoff: '',
-      tripFare: '',
-      tripDate: '',
-      tripTime: '',
-    });
+    setFormData(emptyForm);
   };
+
+  const handleEditClick = (item: LostProperty) => {
+    setSelectedItem(item);
+    setFormData({
+      item: item.item,
+      description: item.description,
+      vehicleRego: item.vehicleRego,
+      driverName: item.driverName,
+      foundLocation: item.foundLocation,
+      foundDate: item.foundDate,
+      status: item.status,
+      passengerPhone: item.passengerPhone || '',
+      tripPickup: item.tripDetails?.pickup || '',
+      tripDropoff: item.tripDetails?.dropoff || '',
+      tripFare: item.tripDetails?.fare?.toString() || '',
+      tripDate: item.tripDetails?.date || '',
+      tripTime: item.tripDetails?.time || '',
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateItem = () => {
+    if (!selectedItem) return;
+    setLocalItems(localItems.map(i => 
+      i.id === selectedItem.id 
+        ? {
+            ...i,
+            item: formData.item,
+            description: formData.description,
+            vehicleRego: formData.vehicleRego,
+            driverName: formData.driverName,
+            foundLocation: formData.foundLocation,
+            foundDate: formData.foundDate,
+            status: formData.status,
+            passengerPhone: formData.passengerPhone || undefined,
+            tripDetails: formData.tripPickup ? {
+              pickup: formData.tripPickup,
+              dropoff: formData.tripDropoff,
+              fare: parseFloat(formData.tripFare) || 0,
+              date: formData.tripDate,
+              time: formData.tripTime,
+            } : undefined,
+          }
+        : i
+    ));
+    setEditDialogOpen(false);
+    setSelectedItem(null);
+    setFormData(emptyForm);
+  };
+
+  const handleDeleteClick = (item: LostProperty) => {
+    setSelectedItem(item);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!selectedItem) return;
+    setLocalItems(localItems.filter(i => i.id !== selectedItem.id));
+    setDeleteDialogOpen(false);
+    setSelectedItem(null);
+  };
+
+  const LostPropertyFormFields = ({ showStatus = false }: { showStatus?: boolean }) => (
+    <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Item Name</Label>
+          <Input 
+            value={formData.item}
+            onChange={(e) => setFormData({...formData, item: e.target.value})}
+            placeholder="e.g., iPhone 15"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Found Date</Label>
+          <Input 
+            value={formData.foundDate}
+            onChange={(e) => setFormData({...formData, foundDate: e.target.value})}
+            placeholder="DD/MM/YYYY"
+          />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label>Description</Label>
+        <Textarea 
+          value={formData.description}
+          onChange={(e) => setFormData({...formData, description: e.target.value})}
+          placeholder="Detailed description of item..."
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Vehicle Rego</Label>
+          <Input 
+            value={formData.vehicleRego}
+            onChange={(e) => setFormData({...formData, vehicleRego: e.target.value})}
+            placeholder="T12-345"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Driver Name</Label>
+          <Input 
+            value={formData.driverName}
+            onChange={(e) => setFormData({...formData, driverName: e.target.value})}
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Found Location</Label>
+          <Input 
+            value={formData.foundLocation}
+            onChange={(e) => setFormData({...formData, foundLocation: e.target.value})}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Passenger Phone (optional)</Label>
+          <Input 
+            value={formData.passengerPhone}
+            onChange={(e) => setFormData({...formData, passengerPhone: e.target.value})}
+            placeholder="04XX XXX XXX"
+          />
+        </div>
+      </div>
+      {showStatus && (
+        <div className="space-y-2">
+          <Label>Status</Label>
+          <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v as typeof formData.status})}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="unclaimed">Unclaimed</SelectItem>
+              <SelectItem value="contacted">Contacted</SelectItem>
+              <SelectItem value="claimed">Claimed</SelectItem>
+              <SelectItem value="disposed">Disposed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      
+      {/* Trip Details Section */}
+      <div className="pt-4 border-t">
+        <h4 className="font-medium mb-3">Trip Details (optional)</h4>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Pickup Location</Label>
+            <Input 
+              value={formData.tripPickup}
+              onChange={(e) => setFormData({...formData, tripPickup: e.target.value})}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Dropoff Location</Label>
+            <Input 
+              value={formData.tripDropoff}
+              onChange={(e) => setFormData({...formData, tripDropoff: e.target.value})}
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-4 mt-4">
+          <div className="space-y-2">
+            <Label>Fare ($)</Label>
+            <Input 
+              value={formData.tripFare}
+              onChange={(e) => setFormData({...formData, tripFare: e.target.value})}
+              placeholder="0.00"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Trip Date</Label>
+            <Input 
+              value={formData.tripDate}
+              onChange={(e) => setFormData({...formData, tripDate: e.target.value})}
+              placeholder="DD/MM/YYYY"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Trip Time</Label>
+            <Input 
+              value={formData.tripTime}
+              onChange={(e) => setFormData({...formData, tripTime: e.target.value})}
+              placeholder="HH:MM"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -133,7 +331,10 @@ export default function LostPropertyPage() {
               className="pl-9"
             />
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog open={dialogOpen} onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) setFormData(emptyForm);
+          }}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
@@ -145,115 +346,7 @@ export default function LostPropertyPage() {
                 <DialogTitle>Report Lost Property</DialogTitle>
                 <DialogDescription>Enter details of the found item.</DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Item Name</Label>
-                    <Input 
-                      value={newItem.item}
-                      onChange={(e) => setNewItem({...newItem, item: e.target.value})}
-                      placeholder="e.g., iPhone 15"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Found Date</Label>
-                    <Input 
-                      value={newItem.foundDate}
-                      onChange={(e) => setNewItem({...newItem, foundDate: e.target.value})}
-                      placeholder="DD/MM/YYYY"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Description</Label>
-                  <Textarea 
-                    value={newItem.description}
-                    onChange={(e) => setNewItem({...newItem, description: e.target.value})}
-                    placeholder="Detailed description of item..."
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Vehicle Rego</Label>
-                    <Input 
-                      value={newItem.vehicleRego}
-                      onChange={(e) => setNewItem({...newItem, vehicleRego: e.target.value})}
-                      placeholder="T12-345"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Driver Name</Label>
-                    <Input 
-                      value={newItem.driverName}
-                      onChange={(e) => setNewItem({...newItem, driverName: e.target.value})}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Found Location</Label>
-                    <Input 
-                      value={newItem.foundLocation}
-                      onChange={(e) => setNewItem({...newItem, foundLocation: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Passenger Phone (optional)</Label>
-                    <Input 
-                      value={newItem.passengerPhone}
-                      onChange={(e) => setNewItem({...newItem, passengerPhone: e.target.value})}
-                      placeholder="04XX XXX XXX"
-                    />
-                  </div>
-                </div>
-                
-                {/* Trip Details Section */}
-                <div className="pt-4 border-t">
-                  <h4 className="font-medium mb-3">Trip Details (optional)</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Pickup Location</Label>
-                      <Input 
-                        value={newItem.tripPickup}
-                        onChange={(e) => setNewItem({...newItem, tripPickup: e.target.value})}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Dropoff Location</Label>
-                      <Input 
-                        value={newItem.tripDropoff}
-                        onChange={(e) => setNewItem({...newItem, tripDropoff: e.target.value})}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4 mt-4">
-                    <div className="space-y-2">
-                      <Label>Fare ($)</Label>
-                      <Input 
-                        value={newItem.tripFare}
-                        onChange={(e) => setNewItem({...newItem, tripFare: e.target.value})}
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Trip Date</Label>
-                      <Input 
-                        value={newItem.tripDate}
-                        onChange={(e) => setNewItem({...newItem, tripDate: e.target.value})}
-                        placeholder="DD/MM/YYYY"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Trip Time</Label>
-                      <Input 
-                        value={newItem.tripTime}
-                        onChange={(e) => setNewItem({...newItem, tripTime: e.target.value})}
-                        placeholder="HH:MM"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <LostPropertyFormFields />
               <DialogFooter>
                 <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
                 <Button onClick={handleAddItem}>Add Item</Button>
@@ -382,6 +475,14 @@ export default function LostPropertyPage() {
                   </div>
 
                   <div className="lg:text-right space-y-2">
+                    <div className="flex lg:justify-end gap-1 mb-2">
+                      <Button variant="ghost" size="icon" onClick={() => handleEditClick(item)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(item)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Claim Deadline</p>
                       <p className="font-medium">{item.claimDeadline}</p>
@@ -391,7 +492,7 @@ export default function LostPropertyPage() {
                       <p className="font-medium">{item.contactAttempts}</p>
                     </div>
                     {item.passengerPhone && (
-                      <div className="flex items-center gap-1 justify-end text-sm">
+                      <div className="flex items-center gap-1 lg:justify-end text-sm">
                         <Phone className="h-3 w-3 text-muted-foreground" />
                         <span>{item.passengerPhone}</span>
                       </div>
@@ -409,6 +510,45 @@ export default function LostPropertyPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={(open) => {
+        setEditDialogOpen(open);
+        if (!open) {
+          setSelectedItem(null);
+          setFormData(emptyForm);
+        }
+      }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Lost Property</DialogTitle>
+            <DialogDescription>Update the item details below.</DialogDescription>
+          </DialogHeader>
+          <LostPropertyFormFields showStatus />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleUpdateItem}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Item</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{selectedItem?.item}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

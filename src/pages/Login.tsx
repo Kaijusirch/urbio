@@ -86,7 +86,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4 lg:p-8">
-      <div className="w-full max-w-4xl flex flex-col lg:flex-row gap-8 items-center">
+      <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-8 items-center lg:items-start">
         {/* Logo Header */}
         <div className="flex-1 text-center lg:text-left">
           <img 
@@ -94,26 +94,6 @@ export default function Login() {
             alt="Urbio Logo" 
             className="w-82 h-82 mx-auto lg:mx-0 object-contain mb-4"
           />
-          {/* Demo Credentials */}
-          <div className="p-4 rounded-lg bg-accent/10 border border-accent/30 text-left">
-            <p className="text-sm font-medium text-accent-foreground mb-3">Demo Credentials</p>
-            <div className="space-y-2 text-sm">
-              {roleOptions.map((option) => (
-                <div key={option.value} className="flex justify-between items-center">
-                  <span className="text-muted-foreground">{option.label}:</span>
-                  <code className="bg-muted px-2 py-0.5 rounded text-xs">{demoCredentials[option.value].email}</code>
-                </div>
-              ))}
-              <div className="pt-2 border-t">
-                <span className="text-muted-foreground">Password: </span>
-                <code className="bg-muted px-2 py-0.5 rounded text-xs">demo123</code>
-              </div>
-              <div>
-                <span className="text-muted-foreground">2FA Code: </span>
-                <code className="bg-muted px-2 py-0.5 rounded text-xs">any 6 digits</code>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Login Form */}
@@ -238,6 +218,29 @@ export default function Login() {
             )}
           </CardContent>
         </Card>
+
+        {/* Demo Credentials */}
+        <div className="w-full max-w-xs">
+          <div className="p-4 rounded-lg bg-accent/10 border border-accent/30 text-left">
+            <p className="text-sm font-medium text-accent-foreground mb-3">Demo Credentials</p>
+            <div className="space-y-2 text-sm">
+              {roleOptions.map((option) => (
+                <div key={option.value} className="flex justify-between items-center">
+                  <span className="text-muted-foreground">{option.label}:</span>
+                  <code className="bg-muted px-2 py-0.5 rounded text-xs">{demoCredentials[option.value].email}</code>
+                </div>
+              ))}
+              <div className="pt-2 border-t">
+                <span className="text-muted-foreground">Password: </span>
+                <code className="bg-muted px-2 py-0.5 rounded text-xs">demo123</code>
+              </div>
+              <div>
+                <span className="text-muted-foreground">2FA Code: </span>
+                <code className="bg-muted px-2 py-0.5 rounded text-xs">any 6 digits</code>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

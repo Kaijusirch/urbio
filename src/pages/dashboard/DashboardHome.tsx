@@ -13,6 +13,7 @@ import {
   Package,
   Clock,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const priorityColors = {
   critical: 'bg-destructive text-destructive-foreground',
@@ -30,6 +31,20 @@ const typeIcons = {
 };
 
 export default function DashboardHome() {
+  const navigate = useNavigate();
+
+  const handleCardClick = (path: string) => {
+    navigate(path);
+  };
+
+  const activityTypeRoutes = {
+    complaint: '/dashboard/complaints',
+    incident: '/dashboard/incidents',
+    lost_property: '/dashboard/lost-property',
+    fare_evasion: '/dashboard/fare-evasions',
+    hearing: '/dashboard/hearings',
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -40,7 +55,10 @@ export default function DashboardHome() {
 
       {/* Key Metrics */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card 
+          className="cursor-pointer transition-all hover:shadow-lg hover:border-primary/50" 
+          onClick={() => handleCardClick('/dashboard/complaints')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Complaints</CardTitle>
             <MessageSquareWarning className="h-4 w-4 text-muted-foreground" />
@@ -53,7 +71,10 @@ export default function DashboardHome() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer transition-all hover:shadow-lg hover:border-primary/50"
+          onClick={() => handleCardClick('/dashboard/fare-evasions')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Open Fare Evasions</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -66,7 +87,10 @@ export default function DashboardHome() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer transition-all hover:shadow-lg hover:border-primary/50"
+          onClick={() => handleCardClick('/dashboard/hearings')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Hearings</CardTitle>
             <Gavel className="h-4 w-4 text-muted-foreground" />
@@ -95,7 +119,8 @@ export default function DashboardHome() {
               return (
                 <div
                   key={item.id}
-                  className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                  className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-all cursor-pointer hover:shadow-md"
+                  onClick={() => handleCardClick(activityTypeRoutes[item.type])}
                 >
                   <div className="flex-shrink-0 mt-0.5">
                     <Icon className="h-4 w-4 text-muted-foreground" />

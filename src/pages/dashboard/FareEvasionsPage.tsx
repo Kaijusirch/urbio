@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { fareEvasions, FareEvasion, drivers } from '@/data/mockData';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, DollarSign, MapPin, Calendar, Clock, User, FileText, Plus, Navigation, Pencil, Trash2 } from 'lucide-react';
 
 const statusColors = {
@@ -56,6 +56,7 @@ type FareEvasionForm = {
   date: string;
   time: string;
   driverId: string;
+  driverLicense: string;
   vehicleRego: string;
   policeReport: string;
   tripPickup: string;
@@ -71,6 +72,7 @@ const emptyForm: FareEvasionForm = {
   date: '',
   time: '',
   driverId: '',
+  driverLicense: '',
   vehicleRego: '',
   policeReport: '',
   tripPickup: '',
@@ -87,6 +89,16 @@ export default function FareEvasionsPage() {
   const [selectedCase, setSelectedCase] = useState<FareEvasion | null>(null);
   const [formData, setFormData] = useState<FareEvasionForm>(emptyForm);
 
+  // Auto-populate driver ID and name from license number
+  useEffect(() => {
+    if (formData.driverLicense && !formData.driverId) {
+      const foundDriver = drivers.find(d => d.licenseNumber === formData.driverLicense || d.authNumber === formData.driverLicense);
+      if (foundDriver) {
+        setFormData(prev => ({ ...prev, driverId: foundDriver.id }));
+      }
+    }
+  }, [formData.driverLicense]);
+
   const filteredCases = localCases.filter(
     (item) =>
       item.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -100,7 +112,10 @@ export default function FareEvasionsPage() {
     .reduce((sum, fe) => sum + fe.amount, 0);
 
   const handleAddCase = () => {
-    const selectedDriver = drivers.find(d => d.id === formData.driverId);
+    let selectedDriver = drivers.find(d => d.id === formData.driverId);
+    if (!selectedDriver && formData.driverLicense) {
+      selectedDriver = drivers.find(d => d.licenseNumber === formData.driverLicense || d.authNumber === formData.driverLicense);
+    }
     const newFareEvasion: FareEvasion = {
       id: `FE${String(localCases.length + 1).padStart(3, '0')}`,
       reference: `EVD-2026-${String(35 + localCases.length).padStart(4, '0')}`,
@@ -110,7 +125,7 @@ export default function FareEvasionsPage() {
       passengerDescription: formData.passengerDescription,
       date: formData.date,
       time: formData.time,
-      driverId: formData.driverId,
+      driverId: selectedDriver?.id || formData.driverId,
       driverName: selectedDriver?.name || 'Unknown',
       vehicleRego: formData.vehicleRego,
       status: 'open',
@@ -135,6 +150,7 @@ export default function FareEvasionsPage() {
       date: evasion.date,
       time: evasion.time,
       driverId: evasion.driverId,
+      driverLicense: '',
       vehicleRego: evasion.vehicleRego,
       policeReport: evasion.policeReport || '',
       tripPickup: evasion.tripDetails?.pickup || '',
@@ -146,7 +162,10 @@ export default function FareEvasionsPage() {
 
   const handleUpdateCase = () => {
     if (!selectedCase) return;
-    const selectedDriver = drivers.find(d => d.id === formData.driverId);
+    let selectedDriver = drivers.find(d => d.id === formData.driverId);
+    if (!selectedDriver && formData.driverLicense) {
+      selectedDriver = drivers.find(d => d.licenseNumber === formData.driverLicense || d.authNumber === formData.driverLicense);
+    }
     setLocalCases(localCases.map(c => 
       c.id === selectedCase.id 
         ? {
@@ -233,7 +252,7 @@ export default function FareEvasionsPage() {
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label>Driver</Label>
+          <Label>Driver (select or use licence below)</Label>
           <Select value={formData.driverId} onValueChange={(v) => setFormData({...formData, driverId: v})}>
             <SelectTrigger>
               <SelectValue placeholder="Select driver" />
@@ -245,6 +264,15 @@ export default function FareEvasionsPage() {
             </SelectContent>
           </Select>
         </div>
+        <div className="space-y-2">
+          <Label>Driver Licence Number (optional)</Label>
+          <Input 
+            value={formData.driverLicense}
+            onChange={(e) => setFormData({...formData, driverLicense: e.target.value})}
+            placeholder="Enter licence to select driver"
+          />
+        </div>
+      </div>
         {showStatus && (
           <div className="space-y-2">
             <Label>Status</Label>
@@ -261,9 +289,9 @@ export default function FareEvasionsPage() {
             </Select>
           </div>
         )}
-      </div>
-      <div className="space-y-2">
-        <Label>Incident Description</Label>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Incident Description</Label>
         <Textarea 
           value={formData.description}
           onChange={(e) => setFormData({...formData, description: e.target.value})}
@@ -285,6 +313,7 @@ export default function FareEvasionsPage() {
           onChange={(e) => setFormData({...formData, policeReport: e.target.value})}
           placeholder="QP2026-XXXXXXX"
         />
+      </div>
       </div>
       
       {/* Trip Details Section */}

@@ -30,10 +30,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { complaints, Complaint, drivers } from '@/data/mockData';
+import { complaints, Complaint, drivers, hearings, Hearing } from '@/data/mockData';
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Search, Clock, AlertCircle, CheckCircle2, FileText, MapPin, Car, DollarSign, Calendar, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Search, Clock, AlertCircle, CheckCircle2, FileText, MapPin, Car, DollarSign, Calendar, Plus, Pencil, Trash2, Zap } from 'lucide-react';
 
 const priorityColors = {
   critical: 'bg-destructive text-destructive-foreground',
@@ -101,6 +101,7 @@ export default function ComplaintsPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [localComplaints, setLocalComplaints] = useState<Complaint[]>(complaints);
+  const [localHearings, setLocalHearings] = useState<Hearing[]>(hearings);
   const location = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -181,6 +182,7 @@ export default function ComplaintsPage() {
       priority: complaint.priority,
       status: complaint.status,
       driverId: complaint.driverId,
+      driverLicense: '',
       vehicleRego: complaint.vehicleRego,
       pickup: complaint.bookingDetails.pickup,
       dropoff: complaint.bookingDetails.dropoff,
@@ -236,6 +238,31 @@ export default function ComplaintsPage() {
     setLocalComplaints(localComplaints.filter(c => c.id !== selectedComplaint.id));
     setDeleteDialogOpen(false);
     setSelectedComplaint(null);
+  };
+
+  const handleEscalateToHearing = (complaint: Complaint, e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Check if hearing already exists for this complaint
+    const existingHearing = localHearings.find(h => h.driverId === complaint.driverId && h.allegation.includes(complaint.title));
+    if (existingHearing) {
+      alert('A hearing already exists for this complaint');
+      return;
+    }
+    // Create new hearing
+    const newHearing: Hearing = {
+      id: `H${String(localHearings.length + 1).padStart(3, '0')}`,
+      reference: `HRG-2026-${String(100 + localHearings.length).padStart(4, '0')}`,
+      driverId: complaint.driverId,
+      driverName: complaint.driverName,
+      scheduledDate: '',
+      scheduledTime: '',
+      allegation: complaint.title,
+      regulationBreach: complaint.description.substring(0, 100),
+      status: 'scheduled',
+      documents: [],
+    };
+    setLocalHearings([...localHearings, newHearing]);
+    alert(`Hearing created: ${newHearing.reference}`);
   };
 
   const ComplaintFormFields = ({ showStatus = false }: { showStatus?: boolean }) => (
@@ -531,6 +558,10 @@ export default function ComplaintsPage() {
                   </div>
                   <Button variant="ghost" size="icon" onClick={(e) => handleEditClick(complaint, e)}>
                     <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={(e) => handleEscalateToHearing(complaint, e)} className="text-warning hover:text-warning">
+                    <Zap className="h-4 w-4 mr-1" />
+                    Escalate
                   </Button>
                   <Button variant="ghost" size="icon" onClick={(e) => handleDeleteClick(complaint, e)}>
                     <Trash2 className="h-4 w-4 text-destructive" />

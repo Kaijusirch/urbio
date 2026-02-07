@@ -387,35 +387,32 @@ export default function ComplaintsPage() {
 
   return (
     <div className="space-y-6">
-        {filteredComplaints.map((complaint) => (
-          <Card id={`complaint-${complaint.id}`} key={complaint.id} className="overflow-hidden">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Complaints Management</h1>
-          <p className="text-muted-foreground">{localComplaints.filter(c => c.status !== 'closed').length} active complaints</p>
-        </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) setFormData(emptyComplaintForm);
-        }}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              New Complaint
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Log New Complaint</DialogTitle>
-              <DialogDescription>Enter details of the customer complaint.</DialogDescription>
-            </DialogHeader>
-            <ComplaintFormFields />
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleAddComplaint}>Log Complaint</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Complaints Management</h1>
+        <p className="text-muted-foreground">{localComplaints.filter(c => c.status !== 'closed').length} active complaints</p>
       </div>
+      <Dialog open={dialogOpen} onOpenChange={(open) => {
+        setDialogOpen(open);
+        if (!open) setFormData(emptyComplaintForm);
+      }}>
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            New Complaint
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Log New Complaint</DialogTitle>
+            <DialogDescription>Enter details of the customer complaint.</DialogDescription>
+          </DialogHeader>
+          <ComplaintFormFields />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleAddComplaint}>Log Complaint</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-4">
@@ -509,7 +506,7 @@ export default function ComplaintsPage() {
       {/* Complaints List */}
       <div className="space-y-4">
         {filteredComplaints.map((complaint) => (
-          <Card key={complaint.id} className="overflow-hidden">
+          <Card id={`complaint-${complaint.id}`} key={complaint.id} className="overflow-hidden">
             <CardHeader 
               className="cursor-pointer hover:bg-muted/50 transition-colors"
               onClick={() => setExpandedId(expandedId === complaint.id ? null : complaint.id)}

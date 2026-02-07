@@ -1,6 +1,6 @@
 
 
-# Queensland Taxi CRM Dashboard - Revised Plan
+# Urbio CRM Dashboard - Revised Plan
 
 ## Overview
 A multi-level access CRM dashboard for taxi dispatch operations in Queensland, Australia, featuring mock login, static realistic data, and custom branding (#008db1 teal and #bdbd36 olive gold).

@@ -1,73 +1,79 @@
-# Welcome to your Lovable project
+# Urbio - Transportation Operations Management Platform
 
-## Project info
+![Urbio Platform](https://kaijusirch.github.io/urbio/assets/images/logo.png)
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+A role-based operational management platform designed specifically for transportation and mobility service providers.
 
-## How can I edit this code?
+## 📋 Overview
 
-There are several ways of editing your application.
+Urbio is a comprehensive operational management platform built to streamline transportation business workflows. The platform integrates dispatch coordination, team management, and regulatory compliance tracking into a unified system, eliminating fragmented processes and improving operational efficiency.
 
-**Use Lovable**
+## 🎯 Purpose
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+Urbio addresses the complex operational challenges faced by transportation and mobility service providers by providing:
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Real-time dispatch coordination** – Efficient ride and job assignment with fleet management capabilities
+- **Team operations management** – Comprehensive oversight tools for managers to monitor performance and analytics
+- **Regulatory compliance tracking** – Automated tools to ensure adherence to transportation regulations and legal requirements
 
-**Use your preferred IDE**
+## 👥 Target Users
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+The platform features role-based access control with three primary user types:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Dispatch Operators
+- Handle real-time job assignments and ride dispatching
+- Coordinate driver assignments and fleet allocation
+- Manage customer service interactions and ride status updates
 
-Follow these steps:
+### Managers
+- Oversee daily operations and team performance
+- Access business analytics and operational metrics
+- Monitor key performance indicators and generate reports
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Compliance Officers
+- Track regulatory requirements and compliance status
+- Monitor driver certifications and licensing
+- Manage vehicle inspections and safety documentation
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## ✨ Key Features
 
-# Step 3: Install the necessary dependencies.
-npm i
+- 🔐 **Secure Authentication** – Role-specific permissions and access controls
+- 🔒 **Two-Factor Authentication (2FA)** – Enhanced security for all user accounts
+- 📊 **Unified Dashboard** – Centralized view of operations across all roles
+- 🔄 **Real-Time Updates** – Live tracking and status monitoring
+- 📱 **Responsive Design** – Accessible across desktop and mobile devices
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+## 🚀 Getting Started
 
-**Edit a file directly in GitHub**
+### Demo Access
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+A demo environment is available for evaluation:
 
-**Use GitHub Codespaces**
+- **URL:** https://kaijusirch.github.io/urbio/
+- **Password:** `demo123`
+- **2FA Code:** Any 6-digit number
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🛠️ Technical Details
 
-## What technologies are used for this project?
+- **Platform:** Web-based application
+- **Hosting:** GitHub Pages
+- **Authentication:** JWT-based with 2FA support
+- **Architecture:** Role-based access control (RBAC) system
 
-This project is built with:
+## 📝 Notes
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+This repository contains the **login/sign-in portal** for the Urbio platform. The full application functionality is accessible after authentication. This appears to be a demonstration/prototype version showcasing a transportation operations CRM concept.
 
-## How can I deploy this project?
+## 🤝 Contributing
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/kaijusirch/urbio/issues).
 
-## Can I connect a custom domain to my Lovable project?
+## 📄 License
 
-Yes, you can!
+This project is open source and available under the [MIT License](LICENSE).
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+---
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+**Developed by:** KaijuSirch  
+**Project URL:** https://kaijusirch.github.io/urbio/  
+**Repository:** https://github.com/kaijusirch/urbio

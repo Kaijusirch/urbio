@@ -1,11 +1,9 @@
-import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { getUrbioAudioLogo } from "@/utils/audioLogo";
 import Login from "./pages/Login";
 import { DashboardLayout } from "./components/layout/DashboardLayout";
 import DashboardHome from "./pages/dashboard/DashboardHome";
@@ -20,30 +18,6 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => {
-  useEffect(() => {
-    // Set up app-start audio on first user interaction
-    const handleFirstInteraction = () => {
-      const urbioAudio = getUrbioAudioLogo();
-      urbioAudio.play().catch(() => {
-        // Silently fail if audio can't play
-      });
-      // Remove listener after first interaction
-      document.removeEventListener("click", handleFirstInteraction);
-      document.removeEventListener("touchstart", handleFirstInteraction);
-      document.removeEventListener("keydown", handleFirstInteraction);
-    };
-
-    document.addEventListener("click", handleFirstInteraction);
-    document.addEventListener("touchstart", handleFirstInteraction);
-    document.addEventListener("keydown", handleFirstInteraction);
-
-    return () => {
-      document.removeEventListener("click", handleFirstInteraction);
-      document.removeEventListener("touchstart", handleFirstInteraction);
-      document.removeEventListener("keydown", handleFirstInteraction);
-    };
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

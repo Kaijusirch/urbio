@@ -31,7 +31,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { complaints, Complaint, drivers } from '@/data/mockData';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Search, Clock, AlertCircle, CheckCircle2, FileText, MapPin, Car, DollarSign, Calendar, Plus, Pencil, Trash2 } from 'lucide-react';
 
 const priorityColors = {
@@ -68,6 +69,7 @@ type ComplaintForm = {
   priority: 'critical' | 'high' | 'medium' | 'low';
   status: 'new' | 'under_review' | 'resolved' | 'closed';
   driverId: string;
+  driverLicense: string;
   vehicleRego: string;
   pickup: string;
   dropoff: string;
@@ -83,6 +85,7 @@ const emptyComplaintForm: ComplaintForm = {
   priority: 'medium',
   status: 'new',
   driverId: '',
+  driverLicense: '',
   vehicleRego: '',
   pickup: '',
   dropoff: '',
@@ -98,6 +101,7 @@ export default function ComplaintsPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [localComplaints, setLocalComplaints] = useState<Complaint[]>(complaints);
+  const location = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -117,8 +121,28 @@ export default function ComplaintsPage() {
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
+  // Open complaint from query param and scroll it into view
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const c = params.get('complaint');
+    if (c) {
+      const exists = localComplaints.find(item => item.id === c);
+      if (exists) {
+        setExpandedId(c);
+        // scroll after a short delay to allow render
+        setTimeout(() => {
+          const el = document.getElementById(`complaint-${c}`);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 120);
+      }
+    }
+  }, [location.search, localComplaints]);
+
   const handleAddComplaint = () => {
-    const selectedDriver = drivers.find(d => d.id === formData.driverId);
+    let selectedDriver = drivers.find(d => d.id === formData.driverId);
+    if (!selectedDriver && formData.driverLicense) {
+      selectedDriver = drivers.find(d => d.licenseNumber === formData.driverLicense || d.authNumber === formData.driverLicense);
+    }
     const today = new Date();
     const formattedDate = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
     
@@ -131,8 +155,8 @@ export default function ComplaintsPage() {
       status: 'new',
       createdAt: `${formattedDate} ${new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}`,
       deadline: formattedDate,
-      driverId: formData.driverId,
-      driverName: selectedDriver?.name || 'Unknown',
+      driverId: selectedDriver?.id || formData.driverId,
+      driverName: selectedDriver?.name || (formData.driverLicense || 'Unknown'),
       vehicleRego: formData.vehicleRego,
       bookingDetails: {
         pickup: formData.pickup,
@@ -170,7 +194,10 @@ export default function ComplaintsPage() {
 
   const handleUpdateComplaint = () => {
     if (!selectedComplaint) return;
-    const selectedDriver = drivers.find(d => d.id === formData.driverId);
+    let selectedDriver = drivers.find(d => d.id === formData.driverId);
+    if (!selectedDriver && formData.driverLicense) {
+      selectedDriver = drivers.find(d => d.licenseNumber === formData.driverLicense || d.authNumber === formData.driverLicense);
+    }
     setLocalComplaints(localComplaints.map(c => 
       c.id === selectedComplaint.id 
         ? {
@@ -179,8 +206,8 @@ export default function ComplaintsPage() {
             description: formData.description,
             priority: formData.priority,
             status: formData.status,
-            driverId: formData.driverId,
-            driverName: selectedDriver?.name || c.driverName,
+            driverId: selectedDriver?.id || formData.driverId,
+            driverName: selectedDriver?.name || (formData.driverLicense || c.driverName),
             vehicleRego: formData.vehicleRego,
             bookingDetails: {
               pickup: formData.pickup,
@@ -262,22 +289,32 @@ export default function ComplaintsPage() {
             </Select>
           </div>
         )}
-        <div className="space-y-2">
-          <Label>Driver</Label>
-          <Select value={formData.driverId} onValueChange={(v) => setFormData({...formData, driverId: v})}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select driver" />
-            </SelectTrigger>
-            <SelectContent>
-              {drivers.map(d => (
-                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Driver (select)</Label>
+            <Select value={formData.driverId} onValueChange={(v) => setFormData({...formData, driverId: v})}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select driver" />
+              </SelectTrigger>
+              <SelectContent>
+                {drivers.map(d => (
+                  <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Driver Licence Number (optional)</Label>
+            <Input 
+              value={formData.driverLicense}
+              onChange={(e) => setFormData({...formData, driverLicense: e.target.value})}
+              placeholder="Enter licence number to attach driver"
+            />
+          </div>
         </div>
       </div>
       <div className="space-y-2">
-        <Label>Vehicle Rego</Label>
+        <Label>Fleet Number</Label>
         <Input 
           value={formData.vehicleRego}
           onChange={(e) => setFormData({...formData, vehicleRego: e.target.value})}
@@ -350,8 +387,8 @@ export default function ComplaintsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        {filteredComplaints.map((complaint) => (
+          <Card id={`complaint-${complaint.id}`} key={complaint.id} className="overflow-hidden">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Complaints Management</h1>
           <p className="text-muted-foreground">{localComplaints.filter(c => c.status !== 'closed').length} active complaints</p>

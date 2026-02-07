@@ -37,8 +37,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { drivers, Driver } from '@/data/mockData';
+import { drivers, Driver, complaints } from '@/data/mockData';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Phone, AlertCircle, CheckCircle2, Clock, Plus, Pencil, Trash2 } from 'lucide-react';
 
 const accreditationColors = {
@@ -83,6 +84,7 @@ export default function DriversPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const [formData, setFormData] = useState<DriverForm>(emptyDriverForm);
+  const navigate = useNavigate();
 
   const filteredDrivers = localDrivers.filter(
     (driver) =>
@@ -97,7 +99,7 @@ export default function DriversPage() {
       id: `D${String(localDrivers.length + 1).padStart(3, '0')}`,
       name: formData.name,
       licenseNumber: formData.licenseNumber,
-      authNumber: formData.authNumber,
+      authNumber: formData.licenseNumber,
       phone: formData.phone,
       suburb: formData.suburb,
       medicalExpiry: formData.licenseExpiry,
@@ -115,7 +117,7 @@ export default function DriversPage() {
     setFormData({
       name: driver.name,
       licenseNumber: driver.licenseNumber,
-      authNumber: driver.authNumber,
+      authNumber: driver.licenseNumber,
       phone: driver.phone,
       suburb: driver.suburb,
       licenseExpiry: driver.medicalExpiry,
@@ -133,7 +135,7 @@ export default function DriversPage() {
             ...d,
             name: formData.name,
             licenseNumber: formData.licenseNumber,
-            authNumber: formData.authNumber,
+            authNumber: formData.licenseNumber,
             phone: formData.phone,
             suburb: formData.suburb,
             medicalExpiry: formData.licenseExpiry,
@@ -199,9 +201,9 @@ export default function DriversPage() {
         <div className="space-y-2">
           <Label>Authorisation Number</Label>
           <Input 
-            value={formData.authNumber}
-            onChange={(e) => setFormData({...formData, authNumber: e.target.value})}
-            placeholder="TDA-QLD-YYYY-XXXX"
+            value={formData.licenseNumber}
+            readOnly
+            placeholder="Same as licence number"
           />
         </div>
         <div className="space-y-2">
@@ -408,6 +410,30 @@ export default function DriversPage() {
             <DialogDescription>Update the driver's details below.</DialogDescription>
           </DialogHeader>
           <DriverFormFields />
+          {/* Complaints against this driver */}
+          {selectedDriver && (
+            <div className="mt-4">
+              <h3 className="text-sm font-semibold">Complaints against {selectedDriver.name}</h3>
+              <div className="mt-2 space-y-2 max-h-40 overflow-y-auto">
+                {complaints.filter(c => c.driverId === selectedDriver.id).length === 0 && (
+                  <p className="text-sm text-muted-foreground">No complaints on record.</p>
+                )}
+                {complaints.filter(c => c.driverId === selectedDriver.id).map((c) => (
+                  <div key={c.id} className="flex items-center justify-between gap-2 p-2 rounded border">
+                    <div>
+                      <p className="text-sm font-medium">{c.reference} — {c.title}</p>
+                      <p className="text-xs text-muted-foreground">Status: {c.status}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/complaints?complaint=${c.id}`)}>
+                        View
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
             <Button onClick={handleUpdateDriver}>Save Changes</Button>

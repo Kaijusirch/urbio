@@ -30,9 +30,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { complaints, Complaint, drivers } from '@/data/mockData';
-import { useState } from 'react';
-import { Search, Clock, AlertCircle, CheckCircle2, FileText, MapPin, Car, DollarSign, Calendar, Plus, Pencil, Trash2 } from 'lucide-react';
+import { complaints, Complaint, drivers, hearings, Hearing } from '@/data/mockData';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Search, Clock, AlertCircle, CheckCircle2, FileText, MapPin, Car, DollarSign, Calendar, Plus, Pencil, Trash2, Zap } from 'lucide-react';
 
 const priorityColors = {
   critical: 'bg-destructive text-destructive-foreground',
@@ -68,6 +69,7 @@ type ComplaintForm = {
   priority: 'critical' | 'high' | 'medium' | 'low';
   status: 'new' | 'under_review' | 'resolved' | 'closed';
   driverId: string;
+  driverLicense: string;
   vehicleRego: string;
   pickup: string;
   dropoff: string;
@@ -83,6 +85,7 @@ const emptyComplaintForm: ComplaintForm = {
   priority: 'medium',
   status: 'new',
   driverId: '',
+  driverLicense: '',
   vehicleRego: '',
   pickup: '',
   dropoff: '',
@@ -98,6 +101,8 @@ export default function ComplaintsPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [localComplaints, setLocalComplaints] = useState<Complaint[]>(complaints);
+  const [localHearings, setLocalHearings] = useState<Hearing[]>(hearings);
+  const location = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -117,8 +122,28 @@ export default function ComplaintsPage() {
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
+  // Open complaint from query param and scroll it into view
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const c = params.get('complaint');
+    if (c) {
+      const exists = localComplaints.find(item => item.id === c);
+      if (exists) {
+        setExpandedId(c);
+        // scroll after a short delay to allow render
+        setTimeout(() => {
+          const el = document.getElementById(`complaint-${c}`);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 120);
+      }
+    }
+  }, [location.search, localComplaints]);
+
   const handleAddComplaint = () => {
-    const selectedDriver = drivers.find(d => d.id === formData.driverId);
+    let selectedDriver = drivers.find(d => d.id === formData.driverId);
+    if (!selectedDriver && formData.driverLicense) {
+      selectedDriver = drivers.find(d => d.licenseNumber === formData.driverLicense || d.authNumber === formData.driverLicense);
+    }
     const today = new Date();
     const formattedDate = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
     
@@ -131,8 +156,8 @@ export default function ComplaintsPage() {
       status: 'new',
       createdAt: `${formattedDate} ${new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}`,
       deadline: formattedDate,
-      driverId: formData.driverId,
-      driverName: selectedDriver?.name || 'Unknown',
+      driverId: selectedDriver?.id || formData.driverId,
+      driverName: selectedDriver?.name || (formData.driverLicense || 'Unknown'),
       vehicleRego: formData.vehicleRego,
       bookingDetails: {
         pickup: formData.pickup,
@@ -157,6 +182,7 @@ export default function ComplaintsPage() {
       priority: complaint.priority,
       status: complaint.status,
       driverId: complaint.driverId,
+      driverLicense: '',
       vehicleRego: complaint.vehicleRego,
       pickup: complaint.bookingDetails.pickup,
       dropoff: complaint.bookingDetails.dropoff,
@@ -170,7 +196,10 @@ export default function ComplaintsPage() {
 
   const handleUpdateComplaint = () => {
     if (!selectedComplaint) return;
-    const selectedDriver = drivers.find(d => d.id === formData.driverId);
+    let selectedDriver = drivers.find(d => d.id === formData.driverId);
+    if (!selectedDriver && formData.driverLicense) {
+      selectedDriver = drivers.find(d => d.licenseNumber === formData.driverLicense || d.authNumber === formData.driverLicense);
+    }
     setLocalComplaints(localComplaints.map(c => 
       c.id === selectedComplaint.id 
         ? {
@@ -179,8 +208,8 @@ export default function ComplaintsPage() {
             description: formData.description,
             priority: formData.priority,
             status: formData.status,
-            driverId: formData.driverId,
-            driverName: selectedDriver?.name || c.driverName,
+            driverId: selectedDriver?.id || formData.driverId,
+            driverName: selectedDriver?.name || (formData.driverLicense || c.driverName),
             vehicleRego: formData.vehicleRego,
             bookingDetails: {
               pickup: formData.pickup,
@@ -209,6 +238,31 @@ export default function ComplaintsPage() {
     setLocalComplaints(localComplaints.filter(c => c.id !== selectedComplaint.id));
     setDeleteDialogOpen(false);
     setSelectedComplaint(null);
+  };
+
+  const handleEscalateToHearing = (complaint: Complaint, e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Check if hearing already exists for this complaint
+    const existingHearing = localHearings.find(h => h.driverId === complaint.driverId && h.allegation.includes(complaint.title));
+    if (existingHearing) {
+      alert('A hearing already exists for this complaint');
+      return;
+    }
+    // Create new hearing
+    const newHearing: Hearing = {
+      id: `H${String(localHearings.length + 1).padStart(3, '0')}`,
+      reference: `HRG-2026-${String(100 + localHearings.length).padStart(4, '0')}`,
+      driverId: complaint.driverId,
+      driverName: complaint.driverName,
+      scheduledDate: '',
+      scheduledTime: '',
+      allegation: complaint.title,
+      regulationBreach: complaint.description.substring(0, 100),
+      status: 'scheduled',
+      documents: [],
+    };
+    setLocalHearings([...localHearings, newHearing]);
+    alert(`Hearing created: ${newHearing.reference}`);
   };
 
   const ComplaintFormFields = ({ showStatus = false }: { showStatus?: boolean }) => (
@@ -262,22 +316,32 @@ export default function ComplaintsPage() {
             </Select>
           </div>
         )}
-        <div className="space-y-2">
-          <Label>Driver</Label>
-          <Select value={formData.driverId} onValueChange={(v) => setFormData({...formData, driverId: v})}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select driver" />
-            </SelectTrigger>
-            <SelectContent>
-              {drivers.map(d => (
-                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Driver (select)</Label>
+            <Select value={formData.driverId} onValueChange={(v) => setFormData({...formData, driverId: v})}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select driver" />
+              </SelectTrigger>
+              <SelectContent>
+                {drivers.map(d => (
+                  <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Driver Licence Number (optional)</Label>
+            <Input 
+              value={formData.driverLicense}
+              onChange={(e) => setFormData({...formData, driverLicense: e.target.value})}
+              placeholder="Enter licence number to attach driver"
+            />
+          </div>
         </div>
       </div>
       <div className="space-y-2">
-        <Label>Vehicle Rego</Label>
+        <Label>Fleet Number</Label>
         <Input 
           value={formData.vehicleRego}
           onChange={(e) => setFormData({...formData, vehicleRego: e.target.value})}
@@ -350,35 +414,32 @@ export default function ComplaintsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Complaints Management</h1>
-          <p className="text-muted-foreground">{localComplaints.filter(c => c.status !== 'closed').length} active complaints</p>
-        </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) setFormData(emptyComplaintForm);
-        }}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              New Complaint
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Log New Complaint</DialogTitle>
-              <DialogDescription>Enter details of the customer complaint.</DialogDescription>
-            </DialogHeader>
-            <ComplaintFormFields />
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleAddComplaint}>Log Complaint</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Complaints Management</h1>
+        <p className="text-muted-foreground">{localComplaints.filter(c => c.status !== 'closed').length} active complaints</p>
       </div>
+      <Dialog open={dialogOpen} onOpenChange={(open) => {
+        setDialogOpen(open);
+        if (!open) setFormData(emptyComplaintForm);
+      }}>
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            New Complaint
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Log New Complaint</DialogTitle>
+            <DialogDescription>Enter details of the customer complaint.</DialogDescription>
+          </DialogHeader>
+          <ComplaintFormFields />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleAddComplaint}>Log Complaint</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-4">
@@ -472,7 +533,7 @@ export default function ComplaintsPage() {
       {/* Complaints List */}
       <div className="space-y-4">
         {filteredComplaints.map((complaint) => (
-          <Card key={complaint.id} className="overflow-hidden">
+          <Card id={`complaint-${complaint.id}`} key={complaint.id} className="overflow-hidden">
             <CardHeader 
               className="cursor-pointer hover:bg-muted/50 transition-colors"
               onClick={() => setExpandedId(expandedId === complaint.id ? null : complaint.id)}
@@ -497,6 +558,10 @@ export default function ComplaintsPage() {
                   </div>
                   <Button variant="ghost" size="icon" onClick={(e) => handleEditClick(complaint, e)}>
                     <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={(e) => handleEscalateToHearing(complaint, e)} className="text-warning hover:text-warning">
+                    <Zap className="h-4 w-4 mr-1" />
+                    Escalate
                   </Button>
                   <Button variant="ghost" size="icon" onClick={(e) => handleDeleteClick(complaint, e)}>
                     <Trash2 className="h-4 w-4 text-destructive" />

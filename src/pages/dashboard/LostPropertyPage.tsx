@@ -30,8 +30,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { lostProperty, LostProperty } from '@/data/mockData';
-import { useState } from 'react';
+import { lostProperty, LostProperty, drivers } from '@/data/mockData';
+import { useState, useEffect } from 'react';
 import { Search, Package, Phone, MapPin, Calendar, Clock, Plus, DollarSign, Navigation, Pencil, Trash2 } from 'lucide-react';
 
 const statusColors = {
@@ -53,6 +53,7 @@ type LostPropertyForm = {
   description: string;
   vehicleRego: string;
   driverName: string;
+  driverLicense: string;
   foundLocation: string;
   foundDate: string;
   status: 'unclaimed' | 'contacted' | 'claimed' | 'disposed';
@@ -69,6 +70,7 @@ const emptyForm: LostPropertyForm = {
   description: '',
   vehicleRego: '',
   driverName: '',
+  driverLicense: '',
   foundLocation: '',
   foundDate: '',
   status: 'unclaimed',
@@ -88,6 +90,16 @@ export default function LostPropertyPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<LostProperty | null>(null);
   const [formData, setFormData] = useState<LostPropertyForm>(emptyForm);
+
+  // Auto-populate driver name from license number
+  useEffect(() => {
+    if (formData.driverLicense) {
+      const foundDriver = drivers.find(d => d.licenseNumber === formData.driverLicense || d.authNumber === formData.driverLicense);
+      if (foundDriver) {
+        setFormData(prev => ({ ...prev, driverName: foundDriver.name }));
+      }
+    }
+  }, [formData.driverLicense]);
 
   const filteredItems = localItems.filter(
     (item) =>
@@ -131,6 +143,7 @@ export default function LostPropertyPage() {
       description: item.description,
       vehicleRego: item.vehicleRego,
       driverName: item.driverName,
+      driverLicense: '',
       foundLocation: item.foundLocation,
       foundDate: item.foundDate,
       status: item.status,
@@ -223,12 +236,21 @@ export default function LostPropertyPage() {
           />
         </div>
         <div className="space-y-2">
-          <Label>Driver Name</Label>
+          <Label>Driver Licence Number</Label>
           <Input 
-            value={formData.driverName}
-            onChange={(e) => setFormData({...formData, driverName: e.target.value})}
+            value={formData.driverLicense}
+            onChange={(e) => setFormData({...formData, driverLicense: e.target.value})}
+            placeholder="Enter licence number"
           />
         </div>
+      </div>
+      <div className="space-y-2">
+        <Label>Driver Name (auto-filled)</Label>
+        <Input 
+          value={formData.driverName}
+          readOnly
+          placeholder="Will appear when valid licence entered"
+        />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">

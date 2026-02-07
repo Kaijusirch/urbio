@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LogOut, Clock, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import urbioLogo from '@/assets/urbio-logo.png';
 
 const roleLabels = {
   dispatch: 'Dispatch Operator',
@@ -35,8 +36,16 @@ export function Header() {
         <SidebarTrigger className="text-muted-foreground hover:text-foreground">
           <Menu className="h-5 w-5" />
         </SidebarTrigger>
-        <div className="hidden sm:block">
-          <h1 className="font-semibold text-foreground">URBIO by Chris Balsom</h1>
+        <div className="hidden sm:flex items-center gap-3">
+              <img 
+                src={urbioLogo} 
+                alt="Urbio Logo" 
+                className="h-20 w-20 object-contain"
+          />
+          <div className="flex flex-col">
+            <h1 className="font-semibold text-foreground leading-tight">URBIO</h1>
+            <p className="text-xs text-muted-foreground">by Chris Balsom</p>
+          </div>
         </div>
       </div>
 

@@ -40,7 +40,7 @@ export function Header() {
           <img 
             src={urbioLogo} 
             alt="Urbio Logo" 
-            className="h-10 w-10 object-contain"
+            className="h-15 w-15 object-contain"
           />
           <div className="flex flex-col">
             <h1 className="font-semibold text-foreground leading-tight">URBIO</h1>

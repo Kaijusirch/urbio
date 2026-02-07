@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { User, UserRole, demoUsers } from '@/data/mockData';
+import { getLoginSuccessAudio } from '@/utils/audioLogo';
 
 interface AuthContextType {
   user: User | null;
@@ -18,6 +19,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const demoUser = demoUsers.find(u => u.role === role);
     if (demoUser) {
       setUser({ ...demoUser, email });
+      // Play login success sound
+      const loginAudio = getLoginSuccessAudio();
+      loginAudio.play().catch(() => {
+        // Silently fail if audio can't play
+      });
       return true;
     }
     return false;

@@ -37,10 +37,10 @@ export function Header() {
           <Menu className="h-5 w-5" />
         </SidebarTrigger>
         <div className="hidden sm:flex items-center gap-3">
-          <img 
-            src={urbioLogo} 
-            alt="Urbio Logo" 
-            className="h-15 w-15 object-contain"
+              <img 
+                src={urbioLogo} 
+                alt="Urbio Logo" 
+                className="h-20 w-20 object-contain"
           />
           <div className="flex flex-col">
             <h1 className="font-semibold text-foreground leading-tight">URBIO</h1>
